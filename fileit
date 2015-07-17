@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# Backup utility. Copies or moves files and directories
+# to backup or junkyard directories.
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# set some params
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+junkyard="${HOME}/junkyard"
+backyard="${HOME}/backyard"
+#mkdir -p $junkyard
+#mkdir -p $backyard
+today=$(date +%Y-%m-%d.%H%M%S)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function HELP {
+   echo "Usage: ${0##*/} [-b|-j] [-s] [-t] [-h] [<file list>]"
+   echo "  -b = backup files"
+   echo "  -j = junk files"
+   echo "  -s = run silent mode (don't echo commands)"
+   echo "  -t = run in test mode (commands shown but not executed)"
+   exit 2
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function doCmd
+{
+   if [ "$silent" -eq 0 ]; then
+      echo "$1"
+   fi
+   if [ "$testmode" -eq 0 ]; then
+      eval $1
+   fi
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function doFile
+{
+   if [ ! -e "$1" ]
+   then
+      echo "$1 doesn't exist"
+   elif [ -f "$1" ]
+   then
+      doCmd "$action $1 $destination/$1.$today"
+   elif [ -d "$1" ]
+   then
+      if [[ $action =~ "mv" ]]; then
+         echo "is mv"
+         doCmd "$action $1/ $destination/$1.$today"
+      else
+         echo "is cp"
+         doCmd "$action -r $1 $destination/$1.$today"
+      fi
+   fi
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+action="cp"
+destination=$backyard
+silent=0
+testmode=0
+
+while getopts :bjsth FLAG; do
+  case $FLAG in
+    b)  #set option "b"
+      action="cp"
+      destination=$backyard
+      ;;
+    j)  #set option "j"
+      action="mv"
+      destination=$junkyard
+      ;;
+    s)  #set option "s"
+      silent=1
+      ;;
+    t)  #set option "t"
+      testmode=1
+      ;;
+    h)  #show help
+      HELP
+      ;;
+    \?) #unrecognized option - show help
+      echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
+      HELP
+      #If you just want to display a simple error message instead of the full
+      #help, remove the 2 lines above and uncomment the 2 lines below.
+      #echo -e "Use ${BOLD}$SCRIPT -h${NORM} to see the help documentation."\\n
+      #exit 2
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+if [[ $testmode -eq 1 ]]; then
+   echo "... running in test mode"
+fi
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# main
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+args=($@)
+
+for arg in "${args[@]}"
+do
+   doFile $arg
+done
