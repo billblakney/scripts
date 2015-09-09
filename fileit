@@ -39,20 +39,28 @@ function doCmd
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function doFile
 {
+   fullname=$1
+   partname=$1
+
+   regex='(.*\/)(.*)'
+   if [[ $fullname =~ $regex ]]; then
+      partname=${BASH_REMATCH[2]}
+   fi
+
    if [ ! -e "$1" ]
    then
-      echo "$1 doesn't exist"
-   elif [ -f "$1" ]
+      echo "$fullname doesn't exist"
+   elif [ -f "$fullname" ]
    then
-      doCmd "$action $1 $destination/$1.$today"
-   elif [ -d "$1" ]
+      doCmd "$action $fullname $destination/$partname.$today"
+   elif [ -d "$fullname" ]
    then
       if [[ $action =~ "mv" ]]; then
          echo "is mv"
-         doCmd "$action $1/ $destination/$1.$today"
+         doCmd "$action $fullname/ $destination/$partname.$today"
       else
          echo "is cp"
-         doCmd "$action -r $1 $destination/$1.$today"
+         doCmd "$action -r $fullname $destination/$partname.$today"
       fi
    fi
 }
