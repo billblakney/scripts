@@ -1,3 +1,13 @@
 #!/bin/bash
-echo $2
+if [[ $# < 2 ]]; then
+   echo "Grep files of a specified extension for a string. Does this for the current"
+   echo "directory tree. The first argument is the file extension. To match all"
+   echo "extensions use a star surrounded by single quotes ('*'). The second argument"
+   echo "is the search string. If it is multi-word, i.e. has space characters,"
+   echo "surround it with single quotes. Examples:"
+   echo "findit java class       # search for \"class\" in all java files"
+   echo "findit cc 'public void' # search for \"public void\" in all cc files"
+   echo "findit '*' 'two words'  # search all files for \"two words\""
+   exit 1
+fi
 find . -name "*.$1" -exec grep -nH "$2" {} \;
