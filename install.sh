@@ -8,5 +8,5 @@ cp ./fileit $scripts
 cp ./findit $scripts
 cp ./killit $scripts
 cp ./valgrind/suppressions.sh $scripts
-cp ./.bash.alias.fileit $HOME
-cp ./.bash.alias.findit $HOME
+cp ./.bashrc.fileit $HOME
+cp ./.bashrc.findit $HOME
