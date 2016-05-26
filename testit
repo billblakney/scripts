@@ -1,0 +1,15 @@
+#!/bin/bash
+echo "arg: $1"
+fullname=$1
+partname=$1
+regex='(.*\/)(.*)'
+#itsname=${fullname//.*\//}
+if [[ $fullname =~ $regex ]]; then
+#   echo "0> ${BASH_REMATCH[0]}"
+#   echo "1> ${BASH_REMATCH[1]}"
+#   echo "2> ${BASH_REMATCH[2]}"
+   partname=${BASH_REMATCH[2]}
+fi
+#echo "its name: $itsname"
+echo "fullname: $fullname"
+echo "partname: $partname"
