@@ -1,3 +1,158 @@
 #!/bin/bash
-ps -ef | grep -v ${0##*/} |grep $1 |grep -v grep |grep -v tail |awk '{print $2}' |xargs kill -9
-#ps -ef | grep $1 |grep -v ${0##*/} |grep -v grep |grep -v tail |awk '{print $2}' |xargs 
+#
+# TODO description
+#
+
+silent=0
+testmode=0
+pattern=""
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function HELP
+{
+  echo "Usage: ${0##*/} [-s] [-h] [<command_search_pattern>]"
+  echo "  -s = silent mode (kills if only one matching command found)"
+  echo "  -t = test mode (don't kill, just print what would be killed)"
+  echo "  -h = print help message and exit"
+  exit 2
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# process command-line args
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function processCommandLine
+{
+  while getopts :sth FLAG; do
+   case $FLAG in
+     s)  #set option "s"
+       silent=1
+       ;;
+     t)  #set option "t"
+       testmode=1
+       ;;
+     h)  #show help
+       HELP
+       ;;
+     \?) #unrecognized option - show help
+       echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
+       HELP
+       #If you just want to display a simple error message instead of the full
+       #help, remove the 2 lines above and uncomment the 2 lines below.
+       #echo -e "Use ${BOLD}$SCRIPT -h${NORM} to see the help documentation."\\n
+       #exit 2
+       ;;
+   esac
+  done
+  
+  shift "$((OPTIND-1))" # Shift off the options and optional --.
+  
+  #printf '<%s>\n' "$@" # These are the args past the ones parsed
+
+  #
+  # Set search pattern
+  #
+  pattern=$1
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Run in silent mode.
+# If pslines has on entry, kill the corresponding process.
+# If pslines is empty or contains more than one entry,
+# just print a warning message.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function doSilentKill
+{
+  if [ "${#pslines[@]}" -eq 1 ]; then
+    fields=( ${pslines[0]} )
+    if [ $testmode -eq 0 ]; then
+      kill -9 ${fields[1]}
+    else
+      echo "would kill pid ${fields[1]}..."
+    fi
+  elif [ "${#pslines[@]}" -eq 0 ]; then
+    echo "WARNING: no match found for $1"
+  else
+    echo "WARNING: too many matches for $1, no process killed"
+  fi
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Run in interactive mode.
+# If pslines has on entry, ask the user to confirm before killing
+# the corresponding process. If pslines has multiple entries,
+# present the list to the user and let him choose the item to
+# kill, or to just quit the program.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+function doInteractiveKill
+{
+  if [ "${#pslines[@]}" -eq 0 ]; then
+    echo "no matching process found for $1"
+    exit
+  elif [ "${#pslines[@]}" -eq 1 ]; then
+    echo "${pslines[0]}"
+    echo -n "Continue (y/n): "
+    read option
+    if [ $option == "y" ]; then
+      fields=( ${pslines[0]} )
+      if [ $testmode -eq 0 ]; then
+        echo "killing pid ${fields[1]}..."
+        kill -9 ${fields[1]}
+      else
+        echo "would kill pid ${fields[1]}..."
+      fi
+    fi
+    exit
+  else
+    count=0
+    for element in "${pslines[@]}"
+    do
+      ((count++))
+      echo "$count) ${element}"
+    done
+    echo "q) quit"
+    echo -n "Index to kill (1-${#pslines[@]},or q): "
+    read option
+    if [ $option == "q" ]; then
+      exit;
+    fi
+    fields=( ${pslines[$option-1]} )
+    if [ $testmode -eq 0 ]; then
+      echo "killing pid ${fields[1]}..."
+      kill -9 ${fields[1]}
+    else
+      echo "would kill pid ${fields[1]}..."
+    fi
+  fi
+}
+
+function getMatchingProcesses
+{
+  if [[ -d /idp/cots/iec ]]; then
+    disqualifiers="grep -v grep\|grep -v Log\|grep -v Stdio"
+  else
+    mapfile -t pslines < <(ps -ef|grep $pattern|grep -v ${0##*/}|grep -v grep|grep -v tail|grep -v Log|grep -v Stdio)
+  fi
+
+  #echo ${#pslines[*]}
+  #for element in "${pslines[@]}"
+  #do
+  #   fields=( $element )
+  #   echo second_field: ${fields[1]}
+  #done
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# main script
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+processCommandLine $@
+
+getMatchingProcesses
+
+if [[ $silent -eq 1 ]]; then
+  doSilentKill $pattern
+else
+  doInteractiveKill $pattern
+fi
+
