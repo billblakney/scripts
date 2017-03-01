@@ -126,6 +126,9 @@ function doInteractiveKill
   fi
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Get the ps listing entries that match the search pattern
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function getMatchingProcesses
 {
   if [[ -d /idp/cots/iec ]]; then
