@@ -57,7 +57,7 @@ function processCommandLine
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run in silent mode.
-# If pslines has on entry, kill the corresponding process.
+# If pslines has one entry, kill the corresponding process.
 # If pslines is empty or contains more than one entry,
 # just print a warning message.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,9 +132,9 @@ function doInteractiveKill
 function getMatchingProcesses
 {
   if [[ -d /idp/cots/iec ]]; then
-    disqualifiers="grep -v grep\|grep -v Log\|grep -v Stdio"
-  else
     mapfile -t pslines < <(ps -ef|grep $pattern|grep -v ${0##*/}|grep -v grep|grep -v tail|grep -v Log|grep -v Stdio)
+  else
+    mapfile -t pslines < <(ps -ef|grep $pattern|grep -v ${0##*/}|grep -v grep|grep -v tail|grep -v Log)
   fi
 
   #echo ${#pslines[*]}
